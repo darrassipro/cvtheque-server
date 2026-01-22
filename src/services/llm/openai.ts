@@ -68,15 +68,15 @@ export class OpenAIProvider extends BaseLLMProvider {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`OpenAI API error: ${errorData.error?.message || response.statusText}`);
+        const errorData = await response.json() as any;
+        throw new Error(`OpenAI API error: ${errorData?.error?.message || response.statusText}`);
       }
 
-      const data = await response.json();
+      const data = await response.json() as any;
 
       // Extract text content from response
       let content = '';
-      if (data.output && Array.isArray(data.output)) {
+      if (data?.output && Array.isArray(data.output)) {
         const messageOutput = data.output.find((o: any) => o.type === 'message');
         if (messageOutput && messageOutput.content && Array.isArray(messageOutput.content)) {
           const textContent = messageOutput.content.find((c: any) => c.type === 'output_text');
@@ -88,9 +88,9 @@ export class OpenAIProvider extends BaseLLMProvider {
 
       return {
         content,
-        model: data.model || this.currentModelName,
+        model: data?.model || this.currentModelName,
         provider: 'openai',
-        usage: data.usage ? {
+        usage: data?.usage ? {
           promptTokens: data.usage.input_tokens,
           completionTokens: data.usage.output_tokens,
           totalTokens: data.usage.total_tokens,
