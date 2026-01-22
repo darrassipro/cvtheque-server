@@ -431,8 +431,8 @@ export async function updateUserRole(req: AuthenticatedRequest, res: Response): 
       oldValue: oldRole,
       newValue: role,
     },
-    ipAddress: req.ip,
-    userAgent: req.headers['user-agent'],
+    ipAddress: Array.isArray(req.ip) ? req.ip[0] : req.ip,
+    userAgent: Array.isArray(req.headers['user-agent']) ? req.headers['user-agent'][0] : req.headers['user-agent'],
   });
 
   res.json({
@@ -480,8 +480,8 @@ export async function updateUserStatus(req: AuthenticatedRequest, res: Response)
       oldValue: oldStatus,
       newValue: status,
     },
-    ipAddress: req.ip,
-    userAgent: req.headers['user-agent'],
+    ipAddress: Array.isArray(req.ip) ? req.ip[0] : req.ip,
+    userAgent: Array.isArray(req.headers['user-agent']) ? req.headers['user-agent'][0] : req.headers['user-agent'],
   });
 
   res.json({
@@ -524,8 +524,8 @@ export async function deleteUser(req: AuthenticatedRequest, res: Response): Prom
       email: user.email,
       role: user.role,
     },
-    ipAddress: req.ip,
-    userAgent: req.headers['user-agent'],
+    ipAddress: Array.isArray(req.ip) ? req.ip[0] : req.ip,
+    userAgent: Array.isArray(req.headers['user-agent']) ? req.headers['user-agent'][0] : req.headers['user-agent'],
   });
 
   await user.destroy();

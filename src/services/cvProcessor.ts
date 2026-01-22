@@ -269,12 +269,12 @@ class CVProcessorService {
     const industry = this.detectIndustry(skills, experience);
 
     const result: CVExtractionResult = {
-      confidence_score: this.calculateConfidenceScore(personalInfo, experience, education, skills),
+      confidence_score: this.calculateConfidenceScore(personalInfo, experience, education, skills as any),
       photo_detected: false,
       personal_info: personalInfo,
       education: education,
       experience: experience,
-      skills: skills,
+      skills: (typeof skills === 'string' ? { technical: [skills], soft: [], tools: [] } : skills) as any,
       languages: languages,
       certifications: certifications,
       internships: projects,
@@ -283,9 +283,9 @@ class CVProcessorService {
         seniority_level: seniorityLevel,
         industry: industry,
         keywords: [
-          ...(skills?.technical || []),
-          ...(skills?.soft || []),
-          ...(skills?.tools || []),
+          ...(typeof skills === 'string' ? [skills] : (skills?.technical || [])),
+          ...(typeof skills === 'string' ? [] : (skills?.soft || [])),
+          ...(typeof skills === 'string' ? [] : (skills?.tools || [])),
           ...((languages || []).map((l: any) => typeof l === 'string' ? l : l.language))
         ],
       },

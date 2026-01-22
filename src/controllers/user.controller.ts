@@ -404,7 +404,7 @@ export async function uploadProfileAvatar(req: AuthenticatedRequest, res: Respon
       const extractedData = (defaultCV as any).extractedData as CVExtractedData | null;
       if (extractedData) {
         // Update user avatar instead of CV extracted data
-        await req.user!.update({
+        await (req.user as any).update({
           avatar: uploadResult.secureUrl,
         });
       }
