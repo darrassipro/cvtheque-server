@@ -396,7 +396,7 @@ export async function getUserById(req: AuthenticatedRequest, res: Response): Pro
  * Update user role
  */
 export async function updateUserRole(req: AuthenticatedRequest, res: Response): Promise<void> {
-  const { id } = req.params;
+  const { id } = req.params as { id: string };
   const { role } = req.body;
 
   if (!Object.values(UserRole).includes(role)) {
@@ -445,7 +445,7 @@ export async function updateUserRole(req: AuthenticatedRequest, res: Response): 
  * Update user status
  */
 export async function updateUserStatus(req: AuthenticatedRequest, res: Response): Promise<void> {
-  const { id } = req.params;
+  const { id } = req.params as { id: string };
   const { status } = req.body;
 
   if (!Object.values(UserStatus).includes(status)) {
@@ -494,7 +494,7 @@ export async function updateUserStatus(req: AuthenticatedRequest, res: Response)
  * Delete user
  */
 export async function deleteUser(req: AuthenticatedRequest, res: Response): Promise<void> {
-  const { id } = req.params;
+  const { id } = req.params as { id: string };
 
   const user = await User.findByPk(id);
   if (!user) {

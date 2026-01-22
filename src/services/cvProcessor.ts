@@ -275,7 +275,10 @@ class CVProcessorService {
       education: education,
       experience: experience,
       skills: (typeof skills === 'string' ? { technical: [skills], soft: [], tools: [] } : skills) as any,
-      languages: languages,
+      languages: Array.isArray(languages) ? languages.map(lang => ({
+        language: typeof lang === 'string' ? lang : lang.language || '',
+        proficiency: null,
+      })) : languages,
       certifications: certifications,
       internships: projects,
       metadata: {

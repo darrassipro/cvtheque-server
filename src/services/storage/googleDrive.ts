@@ -214,8 +214,8 @@ class GoogleDriveService {
     });
 
     if (response.data.files && response.data.files.length > 0) {
-      this.folderId = response.data.files[0].id!;
-      return this.folderId;
+      this.folderId = response.data.files[0].id || null;
+      return this.folderId ?? '';
     }
 
     // Create folder
