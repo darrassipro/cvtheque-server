@@ -1,3 +1,4 @@
+// @ts-ignore - googleapis module doesn't have type definitions
 import { google, drive_v3 } from 'googleapis';
 import { config } from '../../config/index.js';
 import { GoogleDriveFile } from '../../types/index.js';
@@ -229,10 +230,10 @@ class GoogleDriveService {
       fields: 'id',
     });
 
-    this.folderId = folder.data.id!;
+    this.folderId = folder.data.id || null;
     logger.info(`Created Google Drive folder: ${folderName} (${this.folderId})`);
 
-    return this.folderId;
+    return this.folderId || '';
   }
 }
 

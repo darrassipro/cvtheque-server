@@ -1,5 +1,5 @@
 import { CV, CVStatus, CVExtractedData, LLMConfiguration } from '../models/index.js';
-import { CVExtractionResponse, CVExtractionResult } from '../types/index.js';
+import { CVExtractionResponse, CVExtractionResult, LanguageEntry } from '../types/index.js';
 import { getTextExtractorService } from './parsing/textExtractor.js';
 import { getPhotoExtractorService } from './parsing/photoExtractor.js';
 import { getGoogleDriveService } from './storage/googleDrive.js';
@@ -268,17 +268,21 @@ class CVProcessorService {
     const seniorityLevel = this.estimateSeniority(totalExperienceYears, experience, education);
     const industry = this.detectIndustry(skills, experience);
 
+    // Categorize skills for storage
+    const categorizedSkills = {
+      technical: (skills as string[]).filter(s => this.isTechnicalSkill(s)),
+      soft: (skills as string[]).filter(s => this.isSoftSkill(s)),
+      tools: (skills as string[]).filter(s => this.isToolSkill(s)),
+    };
+
     const result: CVExtractionResult = {
-      confidence_score: this.calculateConfidenceScore(personalInfo, experience, education, skills as any),
+      confidence_score: this.calculateConfidenceScore(personalInfo, experience, education, skills as string[]),
       photo_detected: false,
       personal_info: personalInfo,
       education: education,
       experience: experience,
-      skills: (typeof skills === 'string' ? { technical: [skills], soft: [], tools: [] } : skills) as any,
-      languages: Array.isArray(languages) ? languages.map(lang => ({
-        language: typeof lang === 'string' ? lang : lang.language || '',
-        proficiency: null,
-      })) : languages,
+      skills: categorizedSkills,
+      languages: languages,
       certifications: certifications,
       internships: projects,
       metadata: {
@@ -286,10 +290,10 @@ class CVProcessorService {
         seniority_level: seniorityLevel,
         industry: industry,
         keywords: [
-          ...(typeof skills === 'string' ? [skills] : (skills?.technical || [])),
-          ...(typeof skills === 'string' ? [] : (skills?.soft || [])),
-          ...(typeof skills === 'string' ? [] : (skills?.tools || [])),
-          ...((languages || []).map((l: any) => typeof l === 'string' ? l : l.language))
+          ...categorizedSkills.technical,
+          ...categorizedSkills.soft,
+          ...categorizedSkills.tools,
+          ...((languages || []).map((l: LanguageEntry) => l.language))
         ],
       },
     };
@@ -1039,7 +1043,7 @@ class CVProcessorService {
   /**
    * Extract languages
    */
-  private extractLanguagesAdvanced(context: ExtractionContext): string[] {
+  private extractLanguagesAdvanced(context: ExtractionContext): LanguageEntry[] {
     logger.info('[ADVANCED] Extracting languages');
 
     // Try to find dedicated language section first
@@ -1097,7 +1101,10 @@ class CVProcessorService {
       }
     }
 
-    const languageArray = Array.from(languages);
+    const languageArray = Array.from(languages).map(lang => ({
+      language: lang,
+      proficiency: null,
+    }));
     logger.info(`[LANGUAGES] Found ${languageArray.length} languages`);
     return languageArray;
   }
