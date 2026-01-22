@@ -7,22 +7,23 @@ const logFormat = printf(({ level, message, timestamp, stack }) => {
   return `${timestamp} [${level}]: ${stack || message}`;
 });
 
-export const logger = winston.createLogger({
-  level: config.env === 'development' ? 'debug' : 'info',
-  format: combine(
-    timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-    errors({ stack: true }),
-    logFormat
-  ),
-  transports: [
-    new winston.transports.Console({
-      format: combine(
-        colorize(),
-        timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-        errors({ stack: true }),
-        logFormat
-      ),
-    }),
+// Determine if we can write to file system (not on Vercel or serverless)
+const canWriteFiles = config.env === 'development' && process.env.VERCEL !== '1';
+
+const transports: winston.transport[] = [
+  new winston.transports.Console({
+    format: combine(
+      colorize(),
+      timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+      errors({ stack: true }),
+      logFormat
+    ),
+  }),
+];
+
+// Only add file transports if not in serverless environment
+if (canWriteFiles) {
+  transports.push(
     new winston.transports.File({
       filename: 'logs/error.log',
       level: 'error',
@@ -33,25 +34,24 @@ export const logger = winston.createLogger({
       filename: 'logs/combined.log',
       maxsize: 5242880, // 5MB
       maxFiles: 5,
-    }),
-  ],
-  exceptionHandlers: [
-    new winston.transports.File({ filename: 'logs/exceptions.log' }),
-  ],
-  rejectionHandlers: [
-    new winston.transports.File({ filename: 'logs/rejections.log' }),
-  ],
-});
-
-// Create logs directory if it doesn't exist
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const logsDir = path.resolve(__dirname, '../../logs');
-
-if (!fs.existsSync(logsDir)) {
-  fs.mkdirSync(logsDir, { recursive: true });
+    })
+  );
 }
+
+export const logger = winston.createLogger({
+  level: config.env === 'development' ? 'debug' : 'info',
+  format: combine(
+    timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+    errors({ stack: true }),
+    logFormat
+  ),
+  transports: transports,
+  ...(canWriteFiles && {
+    exceptionHandlers: [
+      new winston.transports.File({ filename: 'logs/exceptions.log' }),
+    ],
+    rejectionHandlers: [
+      new winston.transports.File({ filename: 'logs/rejections.log' }),
+    ],
+  }),
+});
