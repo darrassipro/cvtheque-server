@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import { Op } from 'sequelize';
-import { User, CV, CVStatus, AuditLog, SystemSettings, UserRole, UserStatus } from '../models/index.js';
+import { User, CV, CVStatus, AuditLog, AuditAction, SystemSettings, UserRole, UserStatus } from '../models/index.js';
 import { AuthenticatedRequest, DashboardStats } from '../types/index.js';
 import { sequelize } from '../config/database.js';
 import { logSettingsChange } from '../middleware/audit.js';
@@ -374,7 +374,7 @@ export async function listUsers(req: AuthenticatedRequest, res: Response): Promi
 export async function getUserById(req: AuthenticatedRequest, res: Response): Promise<void> {
   const { id } = req.params;
 
-  const user = await User.findByPk(id, {
+  const user = await User.findByPk(id as string, {
     attributes: { exclude: ['password'] },
   });
 
@@ -423,7 +423,7 @@ export async function updateUserRole(req: AuthenticatedRequest, res: Response): 
   // Log the change
   await AuditLog.create({
     userId: req.user!.userId,
-    action: 'UPDATE',
+    action: AuditAction.DELETE,
     resource: 'User',
     resourceId: id,
     details: {
@@ -472,7 +472,7 @@ export async function updateUserStatus(req: AuthenticatedRequest, res: Response)
   // Log the change
   await AuditLog.create({
     userId: req.user!.userId,
-    action: 'UPDATE',
+    action: AuditAction.UPDATE,
     resource: 'User',
     resourceId: id,
     details: {
@@ -517,7 +517,7 @@ export async function deleteUser(req: AuthenticatedRequest, res: Response): Prom
   // Log before deletion
   await AuditLog.create({
     userId: req.user!.userId,
-    action: 'DELETE',
+    action: AuditAction.DELETE,
     resource: 'User',
     resourceId: id,
     details: {

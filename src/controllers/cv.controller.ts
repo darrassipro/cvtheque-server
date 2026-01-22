@@ -154,12 +154,12 @@ export async function uploadCV(req: AuthenticatedRequest, res: Response): Promis
           // Unset previous default CV
           await CV.update(
             { isDefault: false },
-            { where: { userId: req.user.userId, isDefault: true, id: { [Op.ne]: cv.id } } }
+            { where: { userId: req.user!.userId, isDefault: true, id: { [Op.ne]: cv.id } } }
           );
           
           // Set new CV as default
           await cv.update({ isDefault: true });
-          logger.info(`[uploadCV] New CV ${cv.id} set as default for user ${req.user.userId}`);
+          logger.info(`[uploadCV] New CV ${cv.id} set as default for user ${req.user!.userId}`);
         } catch (error) {
           logger.error(`Failed to set CV as default: ${cv.id}`, error);
         }
@@ -456,9 +456,9 @@ export async function getCV(req: AuthenticatedRequest, res: Response): Promise<v
       where: {
         sharedWith: req.user.userId,
         [Op.or]: [
-          { expiresAt: null },
-          { expiresAt: { [Op.gt]: new Date() } },
-        ],
+          { expiresAt: null as any },
+          { expiresAt: { [Op.gt]: new Date() } as any },
+        ] as any,
       },
       include: [
         {
@@ -931,9 +931,9 @@ export async function getSharedWithMe(req: AuthenticatedRequest, res: Response):
     where: {
       sharedWith: req.user.userId,
       [Op.or]: [
-        { expiresAt: null },
-        { expiresAt: { [Op.gt]: new Date() } },
-      ],
+        { expiresAt: null as any },
+        { expiresAt: { [Op.gt]: new Date() } as any },
+      ] as any,
     },
     raw: true,
   });

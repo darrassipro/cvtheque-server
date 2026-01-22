@@ -403,8 +403,9 @@ export async function uploadProfileAvatar(req: AuthenticatedRequest, res: Respon
     if (defaultCV) {
       const extractedData = (defaultCV as any).extractedData as CVExtractedData | null;
       if (extractedData) {
-        await extractedData.update({
-          photo: uploadResult.secureUrl,
+        // Update user avatar instead of CV extracted data
+        await req.user!.update({
+          avatar: uploadResult.secureUrl,
         });
       }
     }
@@ -457,10 +458,7 @@ export async function getProfileCV(req: AuthenticatedRequest, res: Response): Pr
 
   res.json({
     success: true,
-    data: {
-      cvId: cv.id,
-      ...extractedData.toJSON(),
-    },
+    data: extractedData.toJSON(),
   });
 }
 
@@ -521,7 +519,7 @@ export async function updateProfileCV(req: AuthenticatedRequest, res: Response):
     ...(location !== undefined && { location }),
     ...(city !== undefined && { city }),
     ...(country !== undefined && { country }),
-    ...(age !== undefined && { age: age ? parseInt(age.toString()) : null }),
+    ...(age !== undefined && { age: age ? parseInt(age.toString()) : (null as any) }),
     ...(gender !== undefined && { gender }),
     ...(education !== undefined && { education }),
     ...(experience !== undefined && { experience }),
@@ -653,7 +651,7 @@ export async function deleteCV(req: AuthenticatedRequest, res: Response): Promis
     const nextCV = await CV.findOne({
       where: {
         userId: req.user.userId,
-        id: { [Op.ne]: cvId },
+        id: { [Op.ne]: cvId as any },
         status: [CVStatus.COMPLETED, CVStatus.ARCHIVED],
       },
       order: [['createdAt', 'DESC']],

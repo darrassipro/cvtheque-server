@@ -135,7 +135,7 @@ class CVProcessorService {
           model = llmResult.model;
 
           if ('error' in extractionResult) {
-            throw new Error(`LLM extraction failed: ${extractionResult.reason}`);
+            throw new Error(`LLM extraction failed: ${(extractionResult as any).error || 'Unknown error'}`);
           }
         } catch (llmError: any) {
           logger.warn(`LLM extraction failed: ${llmError.message}. Falling back to advanced processing.`);
@@ -171,10 +171,11 @@ class CVProcessorService {
         };
       } else if (Array.isArray(cvData.skills)) {
         // Fallback for old flat array format
+        const skillArray = cvData.skills as any[];
         skills = {
-          technical: cvData.skills.filter(s => this.isTechnicalSkill(s)),
-          soft: cvData.skills.filter(s => this.isSoftSkill(s)),
-          tools: cvData.skills.filter(s => this.isToolSkill(s)),
+          technical: (skillArray || []).filter((s: any) => this.isTechnicalSkill(s)),
+          soft: (skillArray || []).filter((s: any) => this.isSoftSkill(s)),
+          tools: (skillArray || []).filter((s: any) => this.isToolSkill(s)),
         };
       } else {
         skills = { technical: [], soft: [], tools: [] };
@@ -281,7 +282,12 @@ class CVProcessorService {
         total_experience_years: totalExperienceYears,
         seniority_level: seniorityLevel,
         industry: industry,
-        keywords: [...skills, ...languages],
+        keywords: [
+          ...(skills?.technical || []),
+          ...(skills?.soft || []),
+          ...(skills?.tools || []),
+          ...((languages || []).map((l: any) => typeof l === 'string' ? l : l.language))
+        ],
       },
     };
 
@@ -1305,13 +1311,17 @@ class CVProcessorService {
       details.push(`${data.education.length} educational qualification(s)`);
     }
 
-    if (data.skills.length > 0) {
-      const topSkills = data.skills.slice(0, 6).join(', ');
+    if (data.skills && (Array.isArray(data.skills) ? data.skills.length > 0 : Object.values(data.skills).some(arr => Array.isArray(arr) && arr.length > 0))) {
+      const allSkills = Array.isArray(data.skills) 
+        ? data.skills 
+        : [...(data.skills?.technical || []), ...(data.skills?.soft || []), ...(data.skills?.tools || [])];
+      const topSkills = allSkills.slice(0, 6).join(', ');
       details.push(`Skilled in: ${topSkills}`);
     }
 
-    if (data.languages.length > 0) {
-      details.push(`Languages: ${data.languages.join(', ')}`);
+    if (data.languages && Array.isArray(data.languages) && data.languages.length > 0) {
+      const languageNames = data.languages.map((lang: any) => typeof lang === 'string' ? lang : lang.language).join(', ');
+      details.push(`Languages: ${languageNames}`);
     }
 
     return `${summary}. ${details.join('. ')}.`;
